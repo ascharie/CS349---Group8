@@ -3,18 +3,9 @@ from collections import Counter
 import math
 
 def ID3(examples, default):
-    '''
-    Takes in an array of examples, and returns a tree (an instance of Node) 
-    trained on the examples.  Each example is a dictionary of attribute:value pairs,
-    and the target class variable is a special attribute with the name "Class".
-    Any missing attributes are denoted with a value of "?"
-    '''
-    attributes = list(examples[0].keys())[:]
+    attributes = examples[0].keys()[:]
     attributes.remove('Class')
     
-    return id3(examples, attributes, default)
-    
-def id3(examples, attributes, default):
     if not examples:
         return Node(label=default, is_leaf=True)
     if all(example['Class'] == examples[0]['Class'] for example in examples):
@@ -28,14 +19,11 @@ def id3(examples, attributes, default):
     t = Node(label=most_common_class, attribute=best_attribute)
     
     splits = split_with(best_attribute, examples)
-    unused_attributes = attributes[:]
-    unused_attributes.remove(best_attribute)
     
     for value, split in splits.items():
-        t.add_child(value, id3(split, unused_attributes, default))
+        t.add_child(value, ID3(split, default))
     
-    return t        
-  
+    return t
         
 def information_gain(examples, attribute):
     original_entropy = entropy(examples)
@@ -71,7 +59,7 @@ def best_split(examples, attributes):
 def prune(node, examples):
     if node is None or node.label is not None:
         return
-
+    
     splits = split_with(node.attribute, examples)
 
     for value, child in node.children.items():
@@ -83,6 +71,7 @@ def prune(node, examples):
     if pruned_accuracy >= subtree_accuracy:
         node.children = {}
         node.is_leaf = True
+        node.label = Counter(example['Class'] for example in examples if 'Class' in example).most_common(1)[0][0]
 
 def test_pruned(examples):
     most_common_class = Counter(example['Class'] for example in examples if 'Class' in example).most_common(1)[0][0]
@@ -96,10 +85,6 @@ def test_pruned(examples):
     return correct_count / len(examples)
 
 def test(node, examples):
-    '''
-    Takes in a trained tree and a test set of examples.  Returns the accuracy (fraction
-    of examples the tree classifies correctly).
-    '''
     correct_count = 0
     for example in examples:
         label = evaluate(node, example)
@@ -110,10 +95,6 @@ def test(node, examples):
 
 
 def evaluate(node, example):
-    '''
-    Takes in a tree and one example.  Returns the Class value that the tree
-    assigns to the example.
-    '''
     if node.is_leaf:
         return node.label
     return evaluate(node.children[example[node.attribute]], example)
