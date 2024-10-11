@@ -2,8 +2,9 @@ from node import Node
 from collections import Counter
 import math
 
+
 def ID3(examples, default):
-    attributes = examples[0].keys()[:]
+    attributes = list(examples[0].keys())[:]
     attributes.remove('Class')
     
     if not examples:
@@ -15,8 +16,7 @@ def ID3(examples, default):
         return Node(label=most_common_class, is_leaf=True)
     
     best_attribute = best_split(examples, attributes)
-    most_common_class = Counter(example['Class'] for example in examples if 'Class' in example).most_common(1)[0][0]
-    t = Node(label=most_common_class, attribute=best_attribute)
+    t = Node(attribute=best_attribute)
     
     splits = split_with(best_attribute, examples)
     
@@ -57,13 +57,14 @@ def best_split(examples, attributes):
     return max(attributes, key = lambda attribute: information_gain(examples, attribute))
 
 def prune(node, examples):
-    if node is None or node.label is not None:
+    if node is None or node.is_leaf:
         return
     
     splits = split_with(node.attribute, examples)
 
     for value, child in node.children.items():
-        prune(child, splits[value])
+        if value in splits:
+            prune(child, splits[value])
         
     subtree_accuracy = test(node, examples)
     pruned_accuracy = test_pruned(examples)
