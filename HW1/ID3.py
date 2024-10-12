@@ -2,8 +2,9 @@ from node import Node
 from collections import Counter
 import math
 
-
-def ID3(examples, default):
+def ID3(examples, default, stop = 0):
+    if stop == 10:
+       return Node(label=most_common_value(examples, 'Class'), is_leaf=True)
     '''
     Takes in an array of examples, and returns a tree (an instance of Node) 
     trained on the examples.  Each example is a dictionary of attribute:value pairs,
@@ -26,7 +27,8 @@ def ID3(examples, default):
     splits = split_with(best_attribute, examples) # split the examples on the best attribute
     
     for value, split in splits.items(): # for each attribute value create a child node using ID3()
-        t.add_child(value, ID3(split, default))
+        sub_split = [{key: value for key, value in example.items() if key != best_attribute} for example in split]
+        t.add_child(value, ID3(sub_split, default, stop+1))
     
     return t
         
@@ -38,7 +40,6 @@ def information_gain(examples, attribute):
     
     splits = split_with(attribute, examples) # split the examples on the attribute
     conditional_entropy = sum(entropy(split) * len(split) / len(examples) for split in splits.values()) # calculate the conditional entropy of the class label given the attribute value.
-    
     return original_entropy - conditional_entropy # return the information gain
 
 

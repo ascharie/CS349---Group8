@@ -1,0 +1,12 @@
+import ID3
+import parse
+
+data_2 = parse.parse('HW1/tennis.data')
+
+data = [dict(a=1, b=0, Class=2), dict(a=1, b=1, Class=1),
+          dict(a=2, b=0, Class=2), dict(a=2, b=1, Class=3),
+          dict(a=3, b=0, Class=1), dict(a=3, b=1, Class=3)]
+
+
+tree = ID3.ID3(data_2, default='1')
+tree.show()

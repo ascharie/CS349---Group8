@@ -11,8 +11,8 @@ class Node:
     def show(self, level=0):
         indent = '     ' * level
 
-        print(indent, 'attribute:', self.attribute)
         if not self.is_leaf:
+            print(indent, 'attribute:', self.attribute)
             for value, child in self.children.items():
                 print(indent, '--', value)
                 child.show(level + 1)
