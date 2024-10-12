@@ -2,9 +2,7 @@ from node import Node
 from collections import Counter
 import math
 
-def ID3(examples, default, stop = 0):
-    if stop == 10:
-       return Node(label=most_common_value(examples, 'Class'), is_leaf=True)
+def ID3(examples, default):
     '''
     Takes in an array of examples, and returns a tree (an instance of Node) 
     trained on the examples.  Each example is a dictionary of attribute:value pairs,
@@ -28,7 +26,7 @@ def ID3(examples, default, stop = 0):
     
     for value, split in splits.items(): # for each attribute value create a child node using ID3()
         sub_split = [{key: value for key, value in example.items() if key != best_attribute} for example in split]
-        t.add_child(value, ID3(sub_split, default, stop+1))
+        t.add_child(value, ID3(sub_split, default))
     
     return t
         
@@ -85,7 +83,7 @@ def prune(node, examples):
     for value, child in node.children.items():  # prune the children of node
         if value in splits:
             prune(child, splits[value])
-        
+
     subtree_accuracy = test(node, examples) # get the validation set accuracy of the subtree
     pruned_accuracy = test_pruned(examples) # get the validation set accuracy of the most common class label
 
@@ -93,6 +91,7 @@ def prune(node, examples):
         node.children = {}
         node.is_leaf = True
         node.label = most_common_value(examples, 'Class')
+        print('PRUNED')
 
 def test_pruned(examples):
     '''
@@ -115,7 +114,13 @@ def test(node, examples):
     '''
     correct_count = 0
     for example in examples:
-        label = evaluate(node, example)
+        try:
+            label = evaluate(node, example)
+        except:
+            node.show()
+            print(example)
+            print(node.attribute)
+            print(node.children)
         if label == example['Class']:
             correct_count += 1
     
