@@ -14,7 +14,7 @@ def ID3(examples, default):
     
     if not examples: # if there are no examples return a leaf node with the default label
         return Node(label=default, is_leaf=True)
-    if len(set([example['Class'] for example in examples])) == 1: # if alle examples have the same label return a leaf node with that label 
+    if len(set([example['Class'] for example in examples])) == 1: # if all examples have the same label return a leaf node with that label 
         return Node(label=examples[0]['Class'], is_leaf=True)
     if not attributes: # if there are no attributes return a leaf node with the most common label
         most_common_class = most_common_value(examples, 'Class')
@@ -113,7 +113,11 @@ def test(node, examples):
     '''
     correct_count = 0
     for example in examples:
-        label = evaluate(node, example)
+        try:
+           label = evaluate(node, example)
+        except:
+            node.show()
+            label = evaluate(node, example)
         if label == example['Class']:
             correct_count += 1
     
@@ -127,7 +131,11 @@ def evaluate(node, example):
     '''
     if node.is_leaf:
         return node.label
-    return evaluate(node.children[example[node.attribute]], example)
+    
+    if example[node.attribute] in node.children:
+        return evaluate(node.children[example[node.attribute]], example)
+    else: # for small datasets not every attribute value is present in data split
+       return node.label
 
 def preprocess(examples, mode='remove'):
   '''

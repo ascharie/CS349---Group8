@@ -2,26 +2,28 @@ import ID3
 import parse
 import unit_tests
 
-# unit_tests.testID3AndEvaluate()
-# unit_tests.testPruning()
-# unit_tests.testID3AndTest()
-# unit_tests.testPruningOnHouseData('HW1/house_votes_84.data')
+unit_tests.testID3AndEvaluate()
+unit_tests.testPruning()
+unit_tests.testID3AndTest()
+unit_tests.testPruningOnHouseData('HW1/house_votes_84.data')
 
-train_data = parse.parse('HW1/cars_train.data')
-val_data = parse.parse('HW1/cars_valid.data')
-test_data = parse.parse('HW1/cars_test.data')
+# train_data = parse.parse('HW1/cars_train.data')
+# val_data = parse.parse('HW1/cars_valid.data')
+# test_data = parse.parse('HW1/cars_test.data')
 
-candy_data = parse.parse('HW1/candy.data')
-house_data = parse.parse('HW1/house_votes_84.data')
+# candy_data = parse.parse('HW1/candy.data')
+# house_data = parse.parse('HW1/house_votes_84.data')
+# tennis_data = parse.parse('HW1/tennis.data')
 
-tree = ID3.ID3(train_data, 'good')
+# tree = ID3.ID3(train_data, 'good')
+
 # tree.show()
-test_noprune = ID3.test(tree, test_data)
+# test_noprune = ID3.test(tree, test_data)
 
-ID3.prune(tree, val_data)
+# ID3.prune(tree, val_data)
 # tree.show()
-test_prune = ID3.test(tree, test_data)
+# test_prune = ID3.test(tree, test_data)
 
-print("Test accuracy before pruning: ", test_noprune)
-print("Test accuracy after pruning: ", test_prune)
+# print("Test accuracy before pruning: ", test_noprune)
+# print("Test accuracy after pruning: ", test_prune)
 
