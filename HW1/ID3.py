@@ -91,7 +91,6 @@ def prune(node, examples):
         node.children = {}
         node.is_leaf = True
         node.label = most_common_value(examples, 'Class')
-        print('PRUNED')
 
 def test_pruned(examples):
     '''
@@ -114,13 +113,7 @@ def test(node, examples):
     '''
     correct_count = 0
     for example in examples:
-        try:
-            label = evaluate(node, example)
-        except:
-            node.show()
-            print(example)
-            print(node.attribute)
-            print(node.children)
+        label = evaluate(node, example)
         if label == example['Class']:
             correct_count += 1
     
