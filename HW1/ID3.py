@@ -1,6 +1,6 @@
 from node import Node
 from collections import Counter
-import math
+import math, random
 
 def ID3(examples, default):
     '''
@@ -171,3 +171,54 @@ def most_common_value(examples, target='Class'):
     '''
     values = [example[target] for example in examples]
     return max(set(values), key=values.count)
+
+
+#Code for random forest:
+
+def construct_random_forest(examples, default, number=50):
+    forest = []
+    features = list(examples[0])
+    features.remove("Class")
+    
+    for i in range(number):
+        num_of_rows = random.randint(25, len(examples))
+        num_of_columns = random.randint(5, len(features))
+        random.shuffle(examples)
+        training_data = examples[:num_of_rows*len(examples)//len(examples)]
+        training_data = extract_columns(training_data, num_of_columns)
+    
+        tree = ID3(training_data, default)
+        forest.append(tree)
+        
+    return forest
+
+def extract_columns(data, num_of_columns):
+    features = list(data[0])
+    features_num = len(features)
+    extracted_data = []
+    
+    for sample in data:
+        items = list(sample.items())
+        class_val = items[-1]
+        extracted_items = items[:num_of_columns*features_num//features_num]
+        extracted_items.append(class_val)
+        extracted_data.append(dict(extracted_items))
+        
+    return extracted_data
+
+def evaluate_random_forest(forest, example):
+    predictions = []
+    for tree in forest:
+        predictions.append(evaluate(tree, example))
+        
+    return Counter(predictions).most_common(1)[0][0]
+
+def test_random_forest(forest, examples):
+    correct_count = 0
+    for example in examples:
+        label = evaluate_random_forest(forest, example)
+    
+        if label == example['Class']:
+            correct_count += 1
+    
+    return correct_count / len(examples)
