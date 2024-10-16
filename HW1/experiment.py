@@ -58,7 +58,6 @@ training_sizes = list(range(10, 301, 10))
 with_pruning_accuracies, without_pruning_accuracies = run_experiment(training_sizes, examples,100)
 
 
-
 # Plot learning curves
 plt.figure(figsize=(10, 6))
 plt.plot(training_sizes, with_pruning_accuracies, label='With Pruning', color='blue')
