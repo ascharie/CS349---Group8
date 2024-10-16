@@ -45,7 +45,11 @@ candy_test = candy_data[len(candy_data)//3:]
 
 #test on single tree with prunning
 tree_Q6 = ID3.ID3(candy_train, 0)
-print("Accuracy on candy.data with single tree with no prunning: ", ID3.test(tree_Q6, candy_test))
+
 
 forest = ID3.construct_random_forest(candy_train, 0)
-print("Accuracy on candy.data with random forest: ", ID3.test_random_forest(forest, candy_test))
+print("Accuracy on train candy.data with single tree with no prunning: ", ID3.test(tree_Q6, candy_train))
+print("Accuracy on train candy.data with random forest: ", ID3.test_random_forest(forest, candy_train))
+print("\n")
+print("Accuracy on test candy.data with single tree with no prunning: ", ID3.test(tree_Q6, candy_test))
+print("Accuracy on test candy.data with random forest: ", ID3.test_random_forest(forest, candy_test))
