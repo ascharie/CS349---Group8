@@ -3,6 +3,11 @@ from collections import Counter
 import math, random
 
 def ID3(examples, default):
+    examples_processed = preprocess(examples) # handle '?' values
+
+    return run_ID3(examples_processed, default)
+
+def run_ID3(examples, default):
     '''
     Takes in an array of examples, and returns a tree (an instance of Node) 
     trained on the examples.  Each example is a dictionary of attribute:value pairs,
@@ -28,7 +33,7 @@ def ID3(examples, default):
     
     for value, split in splits.items(): # for each attribute value create a child node using ID3()
         sub_split = [{key: value for key, value in example.items() if key != best_attribute} for example in split]
-        t.add_child(value, ID3(sub_split, default))
+        t.add_child(value, run_ID3(sub_split, default))
     
     return t
         
