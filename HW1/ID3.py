@@ -175,36 +175,29 @@ def most_common_value(examples, target='Class'):
 
 #Code for random forest:
 
-def construct_random_forest(examples, default, number=50):
+def construct_random_forest(examples, default, number=100):
+    min_row_extraction = 30
+    min_column_extraction = 5
     forest = []
-    features = list(examples[0])
-    features.remove("Class")
+    features = list(examples[0].keys())
+    features.remove('Class')
     
     for i in range(number):
-        num_of_rows = random.randint(25, len(examples))
-        num_of_columns = random.randint(5, len(features))
-        random.shuffle(examples)
-        training_data = examples[:num_of_rows*len(examples)//len(examples)]
-        training_data = extract_columns(training_data, num_of_columns)
+        num_of_rows = random.randint(min_row_extraction, len(examples))
+        num_of_columns = random.randint(min_column_extraction, len(features))
+        training_data = random.sample(examples, num_of_rows)
+        training_data = extract_columns(training_data, num_of_columns, features)
     
         tree = ID3(training_data, default)
         forest.append(tree)
         
     return forest
 
-def extract_columns(data, num_of_columns):
-    features = list(data[0])
-    features_num = len(features)
-    extracted_data = []
+def extract_columns(data, num_of_columns, features):
+    sampled_attributes = random.sample(features, num_of_columns)
+    sampled_attributes.append('Class')
     
-    for sample in data:
-        items = list(sample.items())
-        class_val = items[-1]
-        extracted_items = items[:num_of_columns*features_num//features_num]
-        extracted_items.append(class_val)
-        extracted_data.append(dict(extracted_items))
-        
-    return extracted_data
+    return [{key: value for key, value in example.items() if key in sampled_attributes} for example in data]
 
 def evaluate_random_forest(forest, example):
     predictions = []
