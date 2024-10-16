@@ -28,6 +28,17 @@ def experiment():
     plt.grid(True)
     plt.show()
 
+    pruning_advtg = [with_pruning_accuracies[i] - without_pruning_accuracies[i] for i in range(len(with_pruning_accuracies))]
+
+    # Plot learning curves
+    plt.figure(figsize=(10, 6))
+    plt.plot(training_sizes, pruning_advtg, color='blue')
+    plt.xlabel('Number of Training Examples')
+    plt.ylabel('Accuracy Increase on Test Data')
+    plt.title('Advantage of Pruning depending on Data Set Size')
+    plt.grid(True)
+    plt.show()
+
 
 def run_experiment(training_sizes, examples, num_trials):
         with_pruning_accuracies = []
