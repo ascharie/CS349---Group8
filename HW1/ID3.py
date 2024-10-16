@@ -11,6 +11,8 @@ def ID3(examples, default):
     '''
     attributes = list(examples[0].keys()) # get the attributes without the class attribute
     attributes.remove('Class')
+
+    examples = preprocess(examples) # handle '?' values
     
     if not examples: # if there are no examples return a leaf node with the default label
         return Node(label=default, is_leaf=True)
@@ -137,7 +139,7 @@ def evaluate(node, example):
     else: # for small datasets not every attribute value is present in data split
        return node.label
 
-def preprocess(examples, mode='remove'):
+def preprocess(examples, mode='impute'):
   '''
   Takes in an array of examples, and returns a preprocessed array of examples. Mode "remove"
   removes examples with missing attribute values. Mode "impute" imputes missing attribute
@@ -173,7 +175,7 @@ def most_common_value(examples, target='Class'):
     return max(set(values), key=values.count)
 
 
-#Code for random forest:
+# Code for random forest:
 
 def construct_random_forest(examples, default, number=50):
     forest = []
