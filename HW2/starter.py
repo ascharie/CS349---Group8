@@ -1,4 +1,4 @@
-import math
+import math, random
 import numpy as np
 import random
 from collections import Counter
@@ -115,7 +115,47 @@ def knn(train,query,metric):
 # metric is a string specifying either "euclidean" or "cosim".  
 # All hyper-parameters should be hard-coded in the algorithm.
 def kmeans(train,query,metric):
-    return(labels)
+    k = 3 
+    max_iterations = 100
+    
+    centroids = random.sample([data[1] for data in train], k)
+    clusters = {i: [] for i in range(k)}
+    
+    for iter in range(max_iterations):
+        clusters = {i: [] for i in range(k)}
+        
+        for point in train:
+            if metric == "euclidean":
+                distances = [euclidean(point, centroid) for centroid in centroids]
+            elif metric == "cosim":
+                distances = [cosim(point, centroid) for centroid in centroids]
+            
+            closest_centroid_idx = distances.index(min(distances)) if metric == "euclidean" else distances.index(max(distances))
+            clusters[closest_centroid_idx].append(point)
+        
+        new_centroids = []
+        for i, points in clusters.items():
+            if points:
+                new_centroid = [sum(dim) / len(points) for dim in zip(*points)]
+                new_centroids.append(new_centroid)
+            else:
+                new_centroids.append(random.choice(query))
+        
+        if new_centroids == centroids:
+            break
+        centroids = new_centroids
+
+    labels = []
+    for point in query:
+        if metric == "euclidean":
+            distances = [euclidean(point, centroid) for centroid in centroids]
+        elif metric == "cosim":
+            distances = [cosim(point, centroid) for centroid in centroids]
+            
+    closest_centroid_idx = distances.index(min(distances)) if metric == "euclidean" else distances.index(max(distances))
+    labels.append(closest_centroid_idx)
+    
+    return (labels)
 
 def kmeans_eric(train,query,metric):
     train_data = [attribs for _, attribs in train] # ignore labels
