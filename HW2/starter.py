@@ -7,8 +7,9 @@ from sklearn.preprocessing import StandardScaler
 # returns Euclidean distance between vectors and b
 def euclidean(a,b):
     assert(len(a) == len(b))
-    dist = math.sqrt(sum((x * x) + (y * y) for x, y in zip(a, b)))
-    assert(dist == np.linalg.norm(np.array(a)-np.array(b)))
+    dist = math.sqrt(sum([(x - y)**2 for x, y in zip(a, b)]))
+    assert(abs(dist - np.linalg.norm(np.array(a)-np.array(b)))<1e-5)
+    
     return(dist)
         
 # returns Cosine Similarity between vectors and b
@@ -20,7 +21,7 @@ def cosim(a,b):
 def dot(a,b):
     assert(len(a) == len(b))
     dot = sum([a[i]*b[i] for i in range(len(a))])
-    assert(dot == np.dot(np.array(a), np.array(b)))
+    assert(abs(dot - np.dot(np.array(a), np.array(b)))<1e-5)
     return(dot)
 
 # returns Pearson correlation coefficient between a and b
@@ -31,7 +32,7 @@ def pearson(a,b):
     num = sum([(a[i] - mean_a) * (b[i] - mean_b) for i in range(len(a))])
     denum = euclidean(a, [mean_a]*len(a)) * euclidean(b, [mean_b]*len(b))
     p_coeff = num / denum
-    assert(p_coeff == np.corrcoef(np.array(a), np.array(b))[0][1])
+    assert(abs(p_coeff - np.corrcoef(np.array(a), np.array(b))[0][1])<1e-5)
     return(p_coeff)
 
 # returns hamming distance between a and b
@@ -43,29 +44,46 @@ def hamming(a,b):
     return dist
 
 # returns binary reduced data
-def binarize(X):
-    X_reduced = []
-    for i in X:
-        X_reduced.append([i[0], [0 if j == '0' else 1 for j in i[1]]])
-    return X_reduced
+def binarize(X_train, X_valid, X_test):
+    X_reduced_vec = []
+    for X in [X_train, X_valid, X_test]:
+        X_reduced = []
+        for i in X:
+            X_reduced.append([i[0], [0 if j == '0' else 1 for j in i[1]]])
+        X_reduced_vec.append(X_reduced)
+    return X_reduced_vec[0], X_reduced_vec[1], X_reduced_vec[2]
+
+# returns data converted to floats
+def make_float(X_train, X_valid, X_test):
+    X_reduced_vec = []
+    for X in [X_train, X_valid, X_test]:
+        X_reduced = []
+        for i in X:
+            X_reduced.append([i[0], [float(j) for j in i[1]]])
+        X_reduced_vec.append(X_reduced)
+    return X_reduced_vec[0], X_reduced_vec[1], X_reduced_vec[2]
 
 # returns PCA reduced data
-def pca(X, query):
-    labels_X = [example[0] for example in X]
-    X_data = np.array([example[1] for example in X])
+def pca(X_train, X_valid, X_test):
+    labels_vec = [[example[0] for example in X] for X in [X_train, X_valid, X_test]]
+    data_vec = [np.array([example[1] for example in X]) for X in [X_train, X_valid, X_test]]
 
     # standardize data
     scaler = StandardScaler()
-    X_scaled = scaler.fit_transform(X_data)
-    query_scaled = scaler.transform(query)
+    scaler.fit_transform(data_vec[0]) # fit on train
+    data_scaled_vec = [scaler.transform(data) for data in data_vec]
 
     # reduce dimensions
     pca = PCA(n_components=0.95)
-    X_pca = pca.fit_transform(X_scaled)
-    X_reduced = [[labels_X[i], list(X_pca[i])] for i in range(len(X_pca))]
-    query_reduced = pca.transform(query_scaled)
+    pca.fit_transform(data_scaled_vec[0]) # fit on train
+    data_transformed_vec = [pca.transform(data) for data in data_scaled_vec]
 
-    return X_reduced, query_reduced
+    X_reduced_vec = []
+    for i in range(3):
+        X_reduced = [[labels_vec[i][j], data_transformed_vec[i][j]] for j in range(len(labels_vec[i]))]
+        X_reduced_vec.append(X_reduced)
+
+    return X_reduced_vec[0], X_reduced_vec[1], X_reduced_vec[2]
 
 # returns a list of labels for the query dataset based upon labeled observations in the train dataset.
 # metric is a string specifying either "euclidean" or "cosim".  
