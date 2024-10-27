@@ -1,5 +1,6 @@
 import math
 import numpy as np
+import random
 from collections import Counter
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
@@ -115,6 +116,67 @@ def knn(train,query,metric):
 # All hyper-parameters should be hard-coded in the algorithm.
 def kmeans(train,query,metric):
     return(labels)
+
+def kmeans_eric(train,query,metric):
+    train_data = [attribs for _, attribs in train] # ignore labels
+    k = 10
+
+    # inialize initial cluster means randomly
+    cluster_labels = [chr(ord('a') + i) for i in range(k)]
+    random_cluster_means = random.sample(train_data, k)
+    initial_guess = [[cluster_labels[i], random_cluster_means[i]] for i in range(k)]
+
+    # train kmeans
+    trained_means = kmeans_eric_train(train_data, metric, initial_guess)
+
+    # assign labels to query data
+    labels = []
+    for q in query:
+        distances = []
+        for label, attribs in trained_means:
+            if metric == "euclidean":
+                distance = euclidean(q, attribs)
+            elif metric == "cosim":
+                distance = cosim(q, attribs)
+            
+            distances.append((distance, label))
+        distances.sort(key=lambda x: x[0], reverse=(metric == "cosim"))
+        labels.append(distances[0][1])
+    return labels
+
+
+def kmeans_eric_train(train_data, metric, means):
+    # assign each data point in train_data to nearest cluster means
+    labels = []
+    for q in train_data:
+        distances = []
+        for label, attribs in means:
+            if metric == "euclidean":
+                distance = euclidean(q, attribs)
+            elif metric == "cosim":
+                distance = cosim(q, attribs)
+            
+            distances.append((distance, label))
+        distances.sort(key=lambda x: x[0], reverse=(metric == "cosim"))
+        labels.append(distances[0][1])
+    
+    # update cluster means
+    new_means = []
+    for cluster in range(len(means)):
+        label = means[cluster][0]
+        cluster_data = [train_data[i] for i in range(len(train_data)) if labels[i] == means[cluster][0]]
+        num = []
+        # for each element of each entry in cluster_data, sum them up and append to num
+        for i in range(len(cluster_data[0])):
+            num.append(sum([cluster_data[j][i] for j in range(len(cluster_data))]))
+        new_means.append([label, [num[i] / len(cluster_data) for i in range(len(num))]])
+
+    # check for convergence
+    if np.linalg.norm(np.array([x[1] for x in means]) - np.array([x[1] for x in new_means])) < 1e-5:
+        return new_means
+    else:
+        return kmeans_eric_train(train_data, metric, new_means)
+    
 
 def read_data(file_name):
     
