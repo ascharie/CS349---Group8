@@ -1,15 +1,13 @@
 import math
 import numpy as np
+from collections import Counter
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 
 # returns Euclidean distance between vectors and b
 def euclidean(a,b):
     assert(len(a) == len(b))
-    dist = 0
-    for i in range(len(a)):
-        dist += (b[i] - a[i])**2
-    dist = dist**0.5
+    dist = math.sqrt(sum((x * x) + (y * y) for x, y in zip(a, b)))
     assert(dist == np.linalg.norm(np.array(a)-np.array(b)))
     return(dist)
         
@@ -69,10 +67,25 @@ def pca(X):
 # metric is a string specifying either "euclidean" or "cosim".  
 # All hyper-parameters should be hard-coded in the algorithm.
 def knn(train,query,metric):
+    k = 3 
+    labels = []
 
+    for q in query:
+        distances = []
+        for label, attribs in train:
+            if metric == "euclidean":
+                distance = euclidean(q, attribs)
+            elif metric == "cosim":
+                distance = cosim(q, attribs)
+                
+            distances.append((distance, label))
+        
+        distances.sort(key=lambda x: x[0], reverse=(metric == "cosim"))
+        nearest_neighbors = distances[:k]
+        nearest_labels = [label for _, label in nearest_neighbors]
+        labels.append(Counter(nearest_labels).most_common(1)[0][0])
 
-
-    return(labels)
+    return (labels)
 
 # returns a list of labels for the query dataset based upon observations in the train dataset. 
 # labels should be ignored in the training set
