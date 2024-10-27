@@ -50,18 +50,22 @@ def binarize(X):
     return X_reduced
 
 # returns PCA reduced data
-def pca(X):
-    labels = [example[0] for example in X]
+def pca(X, query):
+    labels_X = [example[0] for example in X]
     X_data = np.array([example[1] for example in X])
 
+    # standardize data
     scaler = StandardScaler()
-    X_scaled = scaler.fit_transform(X_data) # standardize data
+    X_scaled = scaler.fit_transform(X_data)
+    query_scaled = scaler.transform(query)
 
+    # reduce dimensions
     pca = PCA(n_components=0.95)
-    X_pca = pca.fit_transform(X_scaled) # reduce dimensions
+    X_pca = pca.fit_transform(X_scaled)
+    X_reduced = [[labels_X[i], list(X_pca[i])] for i in range(len(X_pca))]
+    query_reduced = pca.transform(query_scaled)
 
-    X_reduced = [[labels[i], list(X_pca[i])] for i in range(len(X_pca))]
-    return X_reduced
+    return X_reduced, query_reduced
 
 # returns a list of labels for the query dataset based upon labeled observations in the train dataset.
 # metric is a string specifying either "euclidean" or "cosim".  
