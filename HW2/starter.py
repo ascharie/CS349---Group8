@@ -110,6 +110,22 @@ def knn(train,query,metric):
 
     return (labels)
 
+# returns labels of query data set based on closest observation in target data set
+def nearest_neighbor(target, query, metric):
+    labels = []
+    for q in query:
+        distances = []
+        for label, attribs in target:
+            if metric == "euclidean":
+                distance = euclidean(q, attribs)
+            elif metric == "cosim":
+                distance = cosim(q, attribs)
+            
+            distances.append((distance, label))
+        distances.sort(key=lambda x: x[0], reverse=(metric == "cosim"))
+        labels.append(distances[0][1])
+    return labels
+
 # returns a list of labels for the query dataset based upon observations in the train dataset. 
 # labels should be ignored in the training set
 # metric is a string specifying either "euclidean" or "cosim".  
@@ -125,42 +141,20 @@ def kmeans(train,query,metric):
 
     # train kmeans
     trained_means = kmeans_train(train_data, metric, initial_guess)
-
     # assign labels to query data
-    labels = []
-    for q in query:
-        distances = []
-        for label, attribs in trained_means:
-            if metric == "euclidean":
-                distance = euclidean(q, attribs)
-            elif metric == "cosim":
-                distance = cosim(q, attribs)
-            
-            distances.append((distance, label))
-        distances.sort(key=lambda x: x[0], reverse=(metric == "cosim"))
-        labels.append(distances[0][1])
+    labels = nearest_neighbor(trained_means, query, metric)
+    
     return labels
 
 def kmeans_train(train_data, metric, means):
     # assign each data point in train_data to nearest cluster means
-    labels = []
-    for q in train_data:
-        distances = []
-        for label, attribs in means:
-            if metric == "euclidean":
-                distance = euclidean(q, attribs)
-            elif metric == "cosim":
-                distance = cosim(q, attribs)
-            
-            distances.append((distance, label))
-        distances.sort(key=lambda x: x[0], reverse=(metric == "cosim"))
-        labels.append(distances[0][1])
-    
+    labels = nearest_neighbor(means, train_data, metric)
+ 
     # update cluster means
     new_means = []
     for cluster in range(len(means)):
         label = means[cluster][0]
-        cluster_data = [train_data[i] for i in range(len(train_data)) if labels[i] == means[cluster][0]]
+        cluster_data = [train_data[i] for i in range(len(train_data)) if labels[i] == label]
         num = []
         # for each element of each entry in cluster_data, sum them up and append to num
         for i in range(len(cluster_data[0])):
@@ -168,7 +162,7 @@ def kmeans_train(train_data, metric, means):
         new_means.append([label, [num[i] / len(cluster_data) for i in range(len(num))]])
 
     # check for convergence
-    if np.linalg.norm(np.array([x[1] for x in means]) - np.array([x[1] for x in new_means])) < 1e-5:
+    if math.sqrt(sum([x**2 for x in [euclidean(x[1], y[1]) for x,y in zip(means, new_means)]])) < 1e-8:
         return new_means
     else:
         return kmeans_train(train_data, metric, new_means)
