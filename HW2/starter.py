@@ -115,49 +115,6 @@ def knn(train,query,metric):
 # metric is a string specifying either "euclidean" or "cosim".  
 # All hyper-parameters should be hard-coded in the algorithm.
 def kmeans(train,query,metric):
-    k = 3 
-    max_iterations = 100
-    
-    centroids = random.sample([data[1] for data in train], k)
-    clusters = {i: [] for i in range(k)}
-    
-    for iter in range(max_iterations):
-        clusters = {i: [] for i in range(k)}
-        
-        for point in train:
-            if metric == "euclidean":
-                distances = [euclidean(point, centroid) for centroid in centroids]
-            elif metric == "cosim":
-                distances = [cosim(point, centroid) for centroid in centroids]
-            
-            closest_centroid_idx = distances.index(min(distances)) if metric == "euclidean" else distances.index(max(distances))
-            clusters[closest_centroid_idx].append(point)
-        
-        new_centroids = []
-        for i, points in clusters.items():
-            if points:
-                new_centroid = [sum(dim) / len(points) for dim in zip(*points)]
-                new_centroids.append(new_centroid)
-            else:
-                new_centroids.append(random.choice(query))
-        
-        if new_centroids == centroids:
-            break
-        centroids = new_centroids
-
-    labels = []
-    for point in query:
-        if metric == "euclidean":
-            distances = [euclidean(point, centroid) for centroid in centroids]
-        elif metric == "cosim":
-            distances = [cosim(point, centroid) for centroid in centroids]
-            
-    closest_centroid_idx = distances.index(min(distances)) if metric == "euclidean" else distances.index(max(distances))
-    labels.append(closest_centroid_idx)
-    
-    return (labels)
-
-def kmeans_eric(train,query,metric):
     train_data = [attribs for _, attribs in train] # ignore labels
     k = 10
 
@@ -167,7 +124,7 @@ def kmeans_eric(train,query,metric):
     initial_guess = [[cluster_labels[i], random_cluster_means[i]] for i in range(k)]
 
     # train kmeans
-    trained_means = kmeans_eric_train(train_data, metric, initial_guess)
+    trained_means = kmeans_train(train_data, metric, initial_guess)
 
     # assign labels to query data
     labels = []
@@ -184,8 +141,7 @@ def kmeans_eric(train,query,metric):
         labels.append(distances[0][1])
     return labels
 
-
-def kmeans_eric_train(train_data, metric, means):
+def kmeans_train(train_data, metric, means):
     # assign each data point in train_data to nearest cluster means
     labels = []
     for q in train_data:
@@ -215,7 +171,7 @@ def kmeans_eric_train(train_data, metric, means):
     if np.linalg.norm(np.array([x[1] for x in means]) - np.array([x[1] for x in new_means])) < 1e-5:
         return new_means
     else:
-        return kmeans_eric_train(train_data, metric, new_means)
+        return kmeans_train(train_data, metric, new_means)
     
 
 def read_data(file_name):
