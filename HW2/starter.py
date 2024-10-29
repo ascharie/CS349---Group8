@@ -75,7 +75,7 @@ def pca(X_train, X_valid, X_test):
     data_scaled_vec = [scaler.transform(data) for data in data_vec]
 
     # reduce dimensions
-    pca = PCA(n_components=0.95)
+    pca = PCA(n_components=0.90)
     pca.fit_transform(data_scaled_vec[0]) # fit on train
     data_transformed_vec = [pca.transform(data) for data in data_scaled_vec]
 
@@ -132,7 +132,7 @@ def nearest_neighbor(target, query, metric):
 # All hyper-parameters should be hard-coded in the algorithm.
 def kmeans(train,query,metric):
     train_data = [attribs for _, attribs in train] # ignore labels
-    k = 10
+    k = 30
 
     # inialize initial cluster means randomly
     cluster_labels = [chr(ord('a') + i) for i in range(k)]
@@ -162,7 +162,7 @@ def kmeans_train(train_data, metric, means):
         new_means.append([label, [num[i] / len(cluster_data) for i in range(len(num))]])
 
     # check for convergence
-    if math.sqrt(sum([x**2 for x in [euclidean(x[1], y[1]) for x,y in zip(means, new_means)]])) < 1e-8:
+    if math.sqrt(sum([x**2 for x in [euclidean(x[1], y[1]) for x,y in zip(means, new_means)]])) < 1e-5:
         return new_means
     else:
         return kmeans_train(train_data, metric, new_means)
