@@ -1,9 +1,10 @@
 import math, random
 import numpy as np
 import random
-from collections import Counter
+from collections import Counter, defaultdict
 from sklearn.decomposition import PCA
-from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import precision_score, recall_score, f1_score
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
 
 # returns Euclidean distance between vectors and b
 def euclidean(a,b):
@@ -181,6 +182,113 @@ def read_data(file_name):
                 attribs.append(tokens[i+1])
             data_set.append([label,attribs])
     return(data_set)
+
+#collaborative filtering
+    
+def get_similar_users(train_ratings, movielens_ratings, target_user_id, metric, K):
+    distances = defaultdict(float)
+    for user, user_ratings in movielens_ratings.items():
+        if user != target_user_id:
+            #find common movies for target_user_id and user in movielens_ratings
+            common_movies = set(train_ratings[target_user_id].keys()).intersection(set(user_ratings.keys()))
+            if common_movies:
+                a = [train_ratings[target_user_id][movie] for movie in common_movies]
+                b = [user_ratings[movie] for movie in common_movies]
+                if metric == "euclidean":
+                    distance = euclidean(a, b)
+                elif metric == "cosim":
+                    distance = cosim(a, b)
+                # append distance and similar user to distances
+                distances[user] += distance
+    #find the K most similar users
+    sorted_distances = sorted(distances.items(), key=lambda x: x[1], reverse=(metric == "cosim"))
+    return [user for user, _ in sorted_distances[:K]]
+
+def recommend_movies(movielens_ratings, target_user_id, similar_users, M):
+    movie_scores = defaultdict(float)
+    for user in similar_users:
+        for movie, rating in movielens_ratings[user].items():
+            #get the movie that target_user_id has not watched
+            if movie not in movielens_ratings[target_user_id]:
+                #add up the ratings of the movie from similar users
+                movie_scores[movie] += rating
+    #sort the movies in descending order and recommend M movies with the highest scores
+    recommended_movies = sorted(movie_scores, key=movie_scores.get, reverse=True)[:M]
+    return recommended_movies
+
+def evaluate(recommendations, ground_truth):
+    #y_true is 1 if the user rated the movie higher than 3, 0 otherwise
+    y_true = [1 if rating > 3 else 0 for movie, rating in ground_truth.items()]
+    #y_pred is 1 if the movie is in recommendations, 0 otherwise
+    y_pred = [1 if movie in recommendations else 0 for movie in ground_truth]
+    precision = precision_score(y_true, y_pred)
+    recall = recall_score(y_true, y_pred)
+    f1 = f1_score(y_true, y_pred)
+    return precision, recall, f1
+
+def read_ratings(file_name):
+    ratings = defaultdict(dict)
+    with open(file_name, 'r') as f:
+        next(f)  # Skip header line
+        for line in f:
+            user, movie, rating, title, genre, age, gender, occupation = line.strip().split('\t')
+            ratings[user][movie] = float(rating)
+    return ratings
+
+# part2 question 2
+def read_more_data(file_name):
+    ratings, user_data, original_ratings = defaultdict(dict), defaultdict(dict), defaultdict(dict)
+    ages = []
+
+    with open(file_name, 'r') as f:
+        next(f)
+        for line in f:
+            user, movie, rating, _, _, age, gender, _ = line.strip().split('\t')
+            ratings[user][movie] = original_ratings[user][movie] = float(rating)
+            user_data[user] = {'gender': gender, 'age': int(age)}
+            ages.append(int(age))
+
+    # Normalize ages and ratings using Min-Max
+    scaler = MinMaxScaler()
+    normalized_ages = scaler.fit_transform(np.array(ages).reshape(-1, 1)).flatten()
+    for i, user in enumerate(user_data):
+        user_data[user]['age'] = normalized_ages[i]
+        user_ratings = list(ratings[user].values())
+        normalized_ratings = scaler.fit_transform(np.array(user_ratings).reshape(-1, 1)).flatten()
+        ratings[user] = dict(zip(ratings[user], normalized_ratings))
+
+    return ratings, user_data, original_ratings
+
+def get_similar_users_improved(train_ratings, movielens_ratings, train_userdata, movielens_userdata, target_user_id, metric, K):
+    distance_sums = defaultdict(float)
+    for user, user_ratings in movielens_ratings.items():
+        if user != target_user_id:
+            a_age = train_userdata[target_user_id]['age']
+            b_age = movielens_userdata[user]['age']
+            a_gender = train_userdata[target_user_id]['gender']
+            b_gender = movielens_userdata[user]['gender']
+            distance_sums[user] = distance_sums[user] + euclidean([a_age], [b_age]) + (a_gender == b_gender)
+            
+            # Find common movies for target_user_id and user in movielens_ratings
+            common_movies = set(train_ratings[target_user_id].keys()).intersection(set(user_ratings.keys()))
+            if common_movies:
+                a_rating = [train_ratings[target_user_id][movie] for movie in common_movies]
+                b_rating = [user_ratings[movie] for movie in common_movies]
+                
+                if metric == "euclidean":
+                    distance = euclidean(a_rating, b_rating)
+                elif metric == "cosim":
+                    distance = cosim(a_rating, b_rating)
+                # Accumulate distance for the user
+                distance_sums[user] += distance
+
+    # Convert the dictionary to a list of tuples and sort it
+    distances = sorted(distance_sums.items(), key=lambda x: x[1], reverse=(metric == "cosim"))
+    # Find the K most similar users
+    similar_users = [user for user, _ in distances[:K]]
+    return similar_users
+
+# end of collaborative filtering
         
 def show(file_name,mode):
     
