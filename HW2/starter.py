@@ -66,7 +66,7 @@ def make_float(X_train, X_valid, X_test):
     return X_reduced_vec[0], X_reduced_vec[1], X_reduced_vec[2]
 
 # returns PCA reduced data
-def pca(X_train, X_valid, X_test):
+def pca(X_train, X_valid, X_test, var):
     labels_vec = [[example[0] for example in X] for X in [X_train, X_valid, X_test]]
     data_vec = [np.array([example[1] for example in X]) for X in [X_train, X_valid, X_test]]
 
@@ -76,7 +76,7 @@ def pca(X_train, X_valid, X_test):
     data_scaled_vec = [scaler.transform(data) for data in data_vec]
 
     # reduce dimensions
-    pca = PCA(n_components=0.90)
+    pca = PCA(n_components=var) # % variance retained
     pca.fit_transform(data_scaled_vec[0]) # fit on train
     data_transformed_vec = [pca.transform(data) for data in data_scaled_vec]
 
@@ -127,26 +127,7 @@ def nearest_neighbor(target, query, metric):
         labels.append(distances[0][1])
     return labels
 
-# returns a list of labels for the query dataset based upon observations in the train dataset. 
-# labels should be ignored in the training set
-# metric is a string specifying either "euclidean" or "cosim".  
-# All hyper-parameters should be hard-coded in the algorithm.
-def kmeans(train,query,metric):
-    train_data = [attribs for _, attribs in train] # ignore labels
-    k = 30
-
-    # inialize initial cluster means randomly
-    cluster_labels = [chr(ord('a') + i) for i in range(k)]
-    random_cluster_means = random.sample(train_data, k)
-    initial_guess = [[cluster_labels[i], random_cluster_means[i]] for i in range(k)]
-
-    # train kmeans
-    trained_means = kmeans_train(train_data, metric, initial_guess)
-    # assign labels to query data
-    labels = nearest_neighbor(trained_means, query, metric)
-    
-    return labels
-
+# returns the means trained on the train data set
 def kmeans_train(train_data, metric, means):
     # assign each data point in train_data to nearest cluster means
     labels = nearest_neighbor(means, train_data, metric)
@@ -167,7 +148,14 @@ def kmeans_train(train_data, metric, means):
         return new_means
     else:
         return kmeans_train(train_data, metric, new_means)
-    
+
+# returns a list of labels for the query dataset based upon observations in the train dataset. 
+# metric is a string specifying either "euclidean" or "cosim".  
+def kmeans_evaluate(query, means, metric):
+    # assign labels to query data
+    labels = nearest_neighbor(means, query, metric)
+    return labels
+
 
 def read_data(file_name):
     
