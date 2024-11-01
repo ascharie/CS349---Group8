@@ -226,15 +226,17 @@ def read_ratings(file_name):
 # part2 question 2
 def read_more_data(file_name):
     ratings, user_data, original_ratings = defaultdict(dict), defaultdict(dict), defaultdict(dict)
+    movie_genres = defaultdict(dict)
     ages = []
 
     with open(file_name, 'r') as f:
         next(f)
         for line in f:
-            user, movie, rating, _, _, age, gender, _ = line.strip().split('\t')
+            user, movie, rating, _ , genre, age, gender, _ = line.strip().split('\t')
             ratings[user][movie] = original_ratings[user][movie] = float(rating)
             user_data[user] = {'gender': gender, 'age': int(age)}
             ages.append(int(age))
+            movie_genres[movie] = set(genre.split('|'))
 
     # Normalize ages and ratings using Min-Max
     scaler = MinMaxScaler()
@@ -245,17 +247,28 @@ def read_more_data(file_name):
         normalized_ratings = scaler.fit_transform(np.array(user_ratings).reshape(-1, 1)).flatten()
         ratings[user] = dict(zip(ratings[user], normalized_ratings))
 
-    return ratings, user_data, original_ratings
+    return ratings, user_data, original_ratings, movie_genres
 
-def get_similar_users_improved(train_ratings, movielens_ratings, train_userdata, movielens_userdata, target_user_id, metric, K):
+def get_similar_users_improved(train_ratings, movielens_ratings, train_userdata, movielens_userdata, train_genres, movielens_genres, target_user_id, metric, K):
     distance_sums = defaultdict(float)
+
+    target_user_movies = train_ratings[target_user_id].keys()
+    target_user_genres = {genre for movie in target_user_movies for genre in train_genres.get(movie,set())}
+
     for user, user_ratings in movielens_ratings.items():
         if user != target_user_id:
             a_age = train_userdata[target_user_id]['age']
             b_age = movielens_userdata[user]['age']
             a_gender = train_userdata[target_user_id]['gender']
             b_gender = movielens_userdata[user]['gender']
-            distance_sums[user] = distance_sums[user] + euclidean([a_age], [b_age]) + (a_gender == b_gender)
+
+            # add weight (tune based on performance)
+            age_weight = 1
+            gender_weight = 1
+            rating_weight = 1
+            genre_weight = 1
+
+            distance_sums[user] += age_weight * euclidean([a_age], [b_age]) + gender_weight * (a_gender == b_gender)
             
             # Find common movies for target_user_id and user in movielens_ratings
             common_movies = set(train_ratings[target_user_id].keys()).intersection(set(user_ratings.keys()))
@@ -268,7 +281,13 @@ def get_similar_users_improved(train_ratings, movielens_ratings, train_userdata,
                 elif metric == "cosim":
                     distance = cosim(a_rating, b_rating)
                 # Accumulate distance for the user
-                distance_sums[user] += distance
+                distance_sums[user] += rating_weight * distance
+
+            # calculate genre similarity between target user and current user
+            current_user_genres = {genre for movie in user_ratings.keys() for genre in movielens_genres.get(movie,set())}
+            genre_similarity_score = len(target_user_genres.intersection(current_user_genres)) / len(target_user_genres) if target_user_genres else 0
+
+            distance_sums[user] += genre_similarity_score * genre_weight
 
     # Convert the dictionary to a list of tuples and sort it
     distances = sorted(distance_sums.items(), key=lambda x: x[1], reverse=(metric == "cosim"))
