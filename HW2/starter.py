@@ -71,9 +71,9 @@ def pca(X_train, X_valid, X_test, var):
     data_vec = [np.array([example[1] for example in X]) for X in [X_train, X_valid, X_test]]
 
     # standardize data
-    scaler = StandardScaler()
-    scaler.fit_transform(data_vec[0]) # fit on train
-    data_scaled_vec = [scaler.transform(data) for data in data_vec]
+    normalizer = StandardScaler()
+    normalizer.fit_transform(data_vec[0]) # fit on train
+    data_scaled_vec = [normalizer.transform(data) for data in data_vec]
 
     # reduce dimensions
     pca = PCA(n_components=var) # % variance retained
@@ -151,7 +151,7 @@ def kmeans_train(train_data, metric, means):
 
 # returns a list of labels for the query dataset based upon observations in the train dataset. 
 # metric is a string specifying either "euclidean" or "cosim".  
-def kmeans_evaluate(query, means, metric):
+def kmeans_evaluate_collaborative_filter(query, means, metric):
     # assign labels to query data
     labels = nearest_neighbor(means, query, metric)
     return labels
@@ -204,11 +204,11 @@ def recommend_movies(movielens_ratings, target_user_id, similar_users, M):
     recommended_movies = sorted(movie_scores, key=movie_scores.get, reverse=True)[:M]
     return recommended_movies
 
-def evaluate(recommendations, ground_truth):
+def evaluate_collaborative_filter(recommendations, user_preference):
     #y_true is 1 if the user rated the movie higher than 3, 0 otherwise
-    y_true = [1 if rating > 3 else 0 for movie, rating in ground_truth.items()]
+    y_true = [1 if rating > 3 else 0 for movie, rating in user_preference.items()]
     #y_pred is 1 if the movie is in recommendations, 0 otherwise
-    y_pred = [1 if movie in recommendations else 0 for movie in ground_truth]
+    y_pred = [1 if movie in recommendations else 0 for movie in user_preference]
     precision = precision_score(y_true, y_pred)
     recall = recall_score(y_true, y_pred)
     f1 = f1_score(y_true, y_pred)
@@ -239,12 +239,12 @@ def read_more_data(file_name):
             movie_genres[movie] = set(genre.split('|'))
 
     # Normalize ages and ratings using Min-Max
-    scaler = MinMaxScaler()
-    normalized_ages = scaler.fit_transform(np.array(ages).reshape(-1, 1)).flatten()
+    normalizer = MinMaxScaler()
+    normalized_ages = normalizer.fit_transform(np.array(ages).reshape(-1, 1)).flatten()
     for i, user in enumerate(user_data):
         user_data[user]['age'] = normalized_ages[i]
         user_ratings = list(ratings[user].values())
-        normalized_ratings = scaler.fit_transform(np.array(user_ratings).reshape(-1, 1)).flatten()
+        normalized_ratings = normalizer.fit_transform(np.array(user_ratings).reshape(-1, 1)).flatten()
         ratings[user] = dict(zip(ratings[user], normalized_ratings))
 
     return ratings, user_data, original_ratings, movie_genres
@@ -268,7 +268,7 @@ def get_similar_users_improved(train_ratings, movielens_ratings, train_userdata,
             rating_weight = 1
             genre_weight = 1
 
-            distance_sums[user] += age_weight * euclidean([a_age], [b_age]) + gender_weight * (a_gender == b_gender)
+            distance_sums[user] += age_weight * euclidean([a_age], [b_age]) + gender_weight * (a_gender != b_gender)
             
             # Find common movies for target_user_id and user in movielens_ratings
             common_movies = set(train_ratings[target_user_id].keys()).intersection(set(user_ratings.keys()))
