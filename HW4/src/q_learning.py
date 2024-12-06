@@ -94,7 +94,40 @@ class QLearning:
 
         current_state, _ = env.reset()
 
-        raise NotImplementedError
+        # raise NotImplementedError
+        self.N = np.zeros(n_actions) # number of times each action has been taken
+
+        # raise NotImplementedError
+        for step in range(steps):
+            print('Available actions:', n_actions)
+
+            available_actions = np.arange(n_actions)
+            if src.random.rand() < self.epsilon:
+                action = src.random.choice(available_actions)
+            else:
+                optimal_actions = np.where(self.Q == np.max(self.Q))[0]
+                action = src.random.choice(optimal_actions)
+
+            state, reward, terminated, truncated, _ = env.step(action)
+            self.N[action] += 1
+
+            step_size = 1 / self.N[action]
+            self.Q[action] += step_size * (reward - self.Q[action])
+
+            all_rewards.append(reward)
+            
+            if terminated or truncated:
+                env.reset()
+        
+        bin_size = int(np.ceil(steps / num_bins))
+        for bin_index in range(num_bins):
+            start = bin_index * bin_size
+            end = min((bin_index + 1) * bin_size, steps)  # Handle last bin
+            avg_rewards[bin_index] = np.mean(all_rewards[start:end])
+
+        state_action_values = np.tile(self.Q, (n_states, 1))
+        return state_action_values, avg_rewards
+
         
     def predict(self, env, state_action_values):
         """
@@ -144,4 +177,20 @@ class QLearning:
 
         # reset environment before your first action
         current_state, _ = env.reset()
-        raise NotImplementedError
+        # raise NotImplementedError
+        states.append(current_state)
+        while True:
+            optimal_actions = np.where(state_action_values[current_state] == np.max(state_action_values[current_state]))[0]
+            action = src.random.choice(optimal_actions)
+            next_state, reward, terminated, truncated, _ = env.step(action)
+
+            states.append(next_state)
+            actions.append(action)
+            rewards.append(reward)
+
+            current_state = next_state
+
+            if terminated or truncated:
+                break
+            
+        return np.array(states), np.array(actions), np.array(rewards)

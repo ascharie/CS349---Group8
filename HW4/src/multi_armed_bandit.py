@@ -89,27 +89,32 @@ class MultiArmedBandit:
 
         # raise NotImplementedError
         for step in range(steps):
+            available_actions = np.arange(n_actions)
             if src.random.rand() < self.epsilon:
-                action = src.random.choice(n_actions)
+                action = src.random.choice(available_actions)
             else:
                 optimal_actions = np.where(self.Q == np.max(self.Q))[0]
                 action = src.random.choice(optimal_actions)
 
-            state, reward, terminated, truncated = env.step(action)
+            state, reward, terminated, truncated, _ = env.step(action)
             self.N[action] += 1
 
             step_size = 1 / self.N[action]
             self.Q[action] += step_size * (reward - self.Q[action])
 
             all_rewards.append(reward)
-            bin = int(np.ceil(steps / num_bins))
-            avg_rewards[bin] = np.mean(all_rewards[bin * num_bins:])
             
             if terminated or truncated:
                 env.reset()
         
+        bin_size = int(np.ceil(steps / num_bins))
+        for bin_index in range(num_bins):
+            start = bin_index * bin_size
+            end = min((bin_index + 1) * bin_size, steps)  # Handle last bin
+            avg_rewards[bin_index] = np.mean(all_rewards[start:end])
+
         state_action_values = np.tile(self.Q, (n_states, 1))
-        return 
+        return state_action_values, avg_rewards
 
 
     def predict(self, env, state_action_values):
@@ -153,17 +158,15 @@ class MultiArmedBandit:
         """
         # reset environment before your first action
         env.reset()
-
         # raise NotImplementedError
 
         states = []
         actions = []
         rewards = []
-
         while True:
-            optimal_actions = np.where(state_action_values == np.max(state_action_values))[0]
+            optimal_actions = np.where(state_action_values[0] == np.max(state_action_values[0]))[0]
             action = src.random.choice(optimal_actions)
-            state, reward, terminated, truncated = env.step(action)
+            state, reward, terminated, truncated, _ = env.step(action)
 
             states.append(state)
             actions.append(action)
@@ -171,5 +174,4 @@ class MultiArmedBandit:
 
             if terminated or truncated:
                 break
-            
         return np.array(states), np.array(actions), np.array(rewards)
