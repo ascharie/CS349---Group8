@@ -41,7 +41,7 @@ def main():
         warnings.filterwarnings("ignore", category=UserWarning)
 
         slots = gymnasium.make('SlotMachines-v0')
-        q2(slots, title="SlotMachines_Comparision")
+        q2(slots, title="SlotMachines_Comparison")
         print(".", end="", flush=True)
       
         frozen_lake = gymnasium.make('FrozenLake-v1', map_name='4x4', is_slippery=False)
