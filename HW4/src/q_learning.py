@@ -95,29 +95,23 @@ class QLearning:
         current_state, _ = env.reset()
 
         # raise NotImplementedError
-        self.N = np.zeros(n_actions) # number of times each action has been taken
-
-        # raise NotImplementedError
         for step in range(steps):
-            print('Available actions:', n_actions)
-
             available_actions = np.arange(n_actions)
             if src.random.rand() < self.epsilon:
                 action = src.random.choice(available_actions)
             else:
-                optimal_actions = np.where(self.Q == np.max(self.Q))[0]
+                optimal_actions = np.where(state_action_values[current_state] == np.max(state_action_values[current_state]))[0]
                 action = src.random.choice(optimal_actions)
 
-            state, reward, terminated, truncated, _ = env.step(action)
-            self.N[action] += 1
+            next_state, reward, terminated, truncated, _ = env.step(action)
 
-            step_size = 1 / self.N[action]
-            self.Q[action] += step_size * (reward - self.Q[action])
-
+            state_action_values[current_state, action] += self.alpha * (reward + self.gamma * np.max(state_action_values[next_state]) - state_action_values[current_state, action])
+            current_state = next_state
+            
             all_rewards.append(reward)
             
             if terminated or truncated:
-                env.reset()
+                current_state, _ = env.reset()
         
         bin_size = int(np.ceil(steps / num_bins))
         for bin_index in range(num_bins):
@@ -125,7 +119,6 @@ class QLearning:
             end = min((bin_index + 1) * bin_size, steps)  # Handle last bin
             avg_rewards[bin_index] = np.mean(all_rewards[start:end])
 
-        state_action_values = np.tile(self.Q, (n_states, 1))
         return state_action_values, avg_rewards
 
         
@@ -178,7 +171,6 @@ class QLearning:
         # reset environment before your first action
         current_state, _ = env.reset()
         # raise NotImplementedError
-        states.append(current_state)
         while True:
             optimal_actions = np.where(state_action_values[current_state] == np.max(state_action_values[current_state]))[0]
             action = src.random.choice(optimal_actions)
