@@ -39,7 +39,7 @@ class SimpleEnv(gymnasium.Env):
         done = self.reward >= self.max_reward
         return 0, self.reward, done, done, {}
 
-    def reset(self):
+    def reset(self, seed=None, options=None): # changed seed=None
         """
         Resets the environment.
         """

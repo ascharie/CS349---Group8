@@ -219,7 +219,7 @@ def choice(arr, size=None, replace=True, p=None):
         assert len(arr) > 0, "Can't call src.random.choice() on empty list/tuple"
         length = len(arr)
     elif type(arr) == np.ndarray:
-        assert np.product(arr.shape) > 0, "Can't call src.random.choice() on empty array"
+        assert np.prod(arr.shape) > 0, "Can't call src.random.choice() on empty array"
         assert len(arr.shape) == 1, "src.random.choice expects a 1-D array"
         length = arr.shape[0]
     else:
