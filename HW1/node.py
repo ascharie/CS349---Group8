@@ -8,13 +8,13 @@ class Node:
     def add_child(self, val, child):
         self.children[val] = child
 
-    # def show(self, level=0):
-    #     indent = '     ' * level
+    def show(self, level=0):
+        indent = '     ' * level
 
-    #     if not self.is_leaf:
-    #         print(indent, 'attribute:', self.attribute)
-    #         for value, child in self.children.items():
-    #             print(indent, '--', value)
-    #             child.show(level + 1)
-    #     else:
-    #         print(indent, 'label:', self.label)
+        if not self.is_leaf:
+            print(indent, 'attribute:', self.attribute)
+            for value, child in self.children.items():
+                print(indent, '--', value)
+                child.show(level + 1)
+        else:
+            print(indent, 'label:', self.label)
