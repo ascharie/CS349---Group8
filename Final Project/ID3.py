@@ -122,7 +122,6 @@ def test(node, X, y):
     for index, example in X.iterrows():
         label = evaluate(node, example)
         if label == None:
-            node.show()
             raise ValueError("Label is None")
         if label == y[index]:
             correct_count += 1
@@ -153,43 +152,43 @@ def most_common_value(series):
 
 # Code for random forest:
 
-def construct_random_forest(examples, default, number=100):
-    min_row_extraction = 30
-    min_column_extraction = 5
+def random_forest(X_train, y_train, X_val, y_val, default, number=50, min_row_extraction=500, min_col_extraction=4):
     forest = []
-    features = list(examples[0].keys())
-    features.remove('Class')
+    features = list(X_train.columns)
     
     for i in range(number):
-        num_of_rows = random.randint(min_row_extraction, len(examples))
-        num_of_columns = random.randint(min_column_extraction, len(features))
-        training_data = random.sample(examples, num_of_rows)
-        training_data = extract_columns(training_data, num_of_columns, features)
+        if i % 10 == 0:
+            print("Training tree #", i)
+        n_rows = random.randint(min_row_extraction, len(X_train))
+        n_cols = random.randint(min_col_extraction, len(features))
+        X_sample = X_train.sample(n_rows)
+        X_sample = X_sample.sample(n=n_cols, axis=1)
+        y_sample = y_train.loc[X_sample.index]
     
-        tree = ID3(training_data, default)
+        tree = ID3(X_sample, y_sample, default)
+        prune(tree, X_val, y_val)
+
         forest.append(tree)
         
     return forest
-
-def extract_columns(data, num_of_columns, features):
-    sampled_attributes = random.sample(features, num_of_columns)
-    sampled_attributes.append('Class')
-    
-    return [{key: value for key, value in example.items() if key in sampled_attributes} for example in data]
 
 def evaluate_random_forest(forest, example):
     predictions = []
     for tree in forest:
         predictions.append(evaluate(tree, example))
-        
     return Counter(predictions).most_common(1)[0][0]
 
-def test_random_forest(forest, examples):
+def test_random_forest(forest, X, y):
     correct_count = 0
-    for example in examples:
+    labels = [None] * len(y)
+    counter = 0
+    for index, example in X.iterrows():
         label = evaluate_random_forest(forest, example)
-    
-        if label == example['Class']:
+        if label == None:
+            raise ValueError("Label is None")
+        if label == y[index]:
             correct_count += 1
+        labels[counter] = label
+        counter += 1
     
-    return correct_count / len(examples)
+    return labels, correct_count / len(y)
